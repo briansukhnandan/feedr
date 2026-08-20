@@ -1,0 +1,39 @@
+{
+  "name": "feedr",
+  "version": "0.1.0",
+  "description": "Platform-agnostic scheduled feed publishing.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./bluesky": {
+      "types": "./dist/bluesky.d.ts",
+      "import": "./dist/bluesky.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test test/**/*.test.ts",
+    "check": "npm run build && npm test",
+    "prepack": "npm run build"
+  },
+  "keywords": ["feed", "bluesky", "scheduler", "cron", "publishing"],
+  "dependencies": {
+    "@atproto/api": "^0.16.0",
+    "cron": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

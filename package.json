@@ -12,12 +12,21 @@
       "import": "./dist/index.js"
     },
     "./bluesky": {
-      "types": "./dist/bluesky.d.ts",
-      "import": "./dist/bluesky.js"
+      "types": "./dist/publishers/bluesky.d.ts",
+      "import": "./dist/publishers/bluesky.js"
     }
   },
   "files": [
-    "dist",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/types.js",
+    "dist/types.d.ts",
+    "dist/runner.js",
+    "dist/runner.d.ts",
+    "dist/scheduler.js",
+    "dist/scheduler.d.ts",
+    "dist/publishers/bluesky.js",
+    "dist/publishers/bluesky.d.ts",
     "README.md",
     "LICENSE"
   ],

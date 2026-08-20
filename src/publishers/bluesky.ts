@@ -7,7 +7,7 @@ import type {
   PublicationReceipt,
   Publisher,
   PublishContext,
-} from "./types.js";
+} from "../types.js";
 
 export interface BlueskyCredentials {
   identifier: string;
@@ -15,7 +15,7 @@ export interface BlueskyCredentials {
 }
 
 export interface BlueskyPublisherOptions {
-  /** Publisher identity, e.g. `bluesky:worldnews-tracker`. */
+  /** Publisher identity, e.g. `bluesky:my-account`. */
   id: string;
 
   credentials: BlueskyCredentials;
@@ -66,8 +66,9 @@ export class BlueskyPublisher implements Publisher {
       last = ref;
     }
 
-    if (!last)
+    if (!last) {
       throw new Error("A Bluesky item must contain at least one post.");
+    }
 
     return {
       id: last.uri,
@@ -100,8 +101,9 @@ export class BlueskyPublisher implements Publisher {
       createdAt: new Date().toISOString(),
     };
     if (root && parent) record.reply = { root, parent };
-    if (segment.media?.length)
+    if (segment.media?.length) {
       record.embed = await this.createImagesEmbed(segment.media, context);
+    }
     return this.agent.post(record);
   }
 
@@ -119,7 +121,6 @@ export class BlueskyPublisher implements Publisher {
       media.slice(0, 4).map(async (image) => {
         const bytes =
           image.data ?? (await this.fetchMedia(image, context.signal));
-        
         const upload = await this.agent.uploadBlob(bytes, {
           encoding: image.mimeType,
         });
@@ -145,10 +146,11 @@ export class BlueskyPublisher implements Publisher {
 
     const response = await fetch(media.url, { signal });
 
-    if (!response.ok)
+    if (!response.ok) {
       throw new Error(
         `Could not fetch media (${response.status}) from ${media.url}.`,
       );
+    }
 
     return new Uint8Array(await response.arrayBuffer());
   }

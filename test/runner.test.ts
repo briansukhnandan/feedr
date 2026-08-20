@@ -21,7 +21,10 @@ test("publishes every collected item to every destination", async () => {
   const feed: Feed = {
     id: "example",
     destinations: [bluesky.id, x.id],
-    collect: () => [{ id: "one", text: "First" }, { id: "two", text: "Second" }],
+    collect: () => [
+      { id: "one", text: "First" },
+      { id: "two", text: "Second" },
+    ],
   };
 
   const result = await new FeedRunner({ publishers: [bluesky, x] }).run(feed);

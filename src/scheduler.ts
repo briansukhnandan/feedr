@@ -12,16 +12,24 @@ export interface ScheduledFeed {
 export class FeedScheduler {
   private readonly jobs: CronJob[] = [];
 
-  constructor(private readonly runner: FeedRunner, feeds: readonly ScheduledFeed[]) {
+  constructor(
+    private readonly runner: FeedRunner,
+    feeds: readonly ScheduledFeed[],
+  ) {
     for (const { feed, schedule = feed.schedule } of feeds) {
-      if (!schedule) throw new Error(`Feed "${feed.id}" needs a cron schedule.`);
-      this.jobs.push(new CronJob(
-        schedule.expression,
-        async () => { await this.runner.run(feed); },
-        undefined,
-        false,
-        schedule.timezone,
-      ));
+      if (!schedule)
+        throw new Error(`Feed "${feed.id}" needs a cron schedule.`);
+      this.jobs.push(
+        new CronJob(
+          schedule.expression,
+          async () => {
+            await this.runner.run(feed);
+          },
+          undefined,
+          false,
+          schedule.timezone,
+        ),
+      );
     }
   }
 

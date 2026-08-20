@@ -51,7 +51,9 @@ export interface Feed {
   /** Publisher ids that should receive every collected item. */
   destinations: string[];
   /** Collect source data and return normalized, stable-id items. */
-  collect(context: FeedRunContext): Promise<readonly FeedItem[]> | readonly FeedItem[];
+  collect(
+    context: FeedRunContext,
+  ): Promise<readonly FeedItem[]> | readonly FeedItem[];
 }
 
 export interface CronSchedule {

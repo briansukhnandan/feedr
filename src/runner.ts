@@ -1,9 +1,4 @@
-import type {
-  Feed,
-  FeedRunError,
-  FeedRunResult,
-  Publisher,
-} from "./types.js";
+import type { Feed, FeedRunError, FeedRunResult, Publisher } from "./types.js";
 
 export interface FeedRunnerOptions {
   publishers: Iterable<Publisher>;
@@ -15,7 +10,9 @@ export class FeedRunner {
   private readonly activeFeeds = new Set<string>();
 
   constructor(options: FeedRunnerOptions) {
-    this.publishers = new Map([...options.publishers].map((publisher) => [publisher.id, publisher]));
+    this.publishers = new Map(
+      [...options.publishers].map((publisher) => [publisher.id, publisher]),
+    );
   }
 
   async run(feed: Feed, signal?: AbortSignal): Promise<FeedRunResult> {
@@ -35,7 +32,8 @@ export class FeedRunner {
 
       for (const item of items) {
         for (const publisherId of feed.destinations) {
-          if (signal?.aborted) throw signal.reason ?? new Error("Feed run aborted.");
+          if (signal?.aborted)
+            throw signal.reason ?? new Error("Feed run aborted.");
           const publisher = this.publishers.get(publisherId)!;
 
           try {
@@ -66,10 +64,13 @@ export class FeedRunner {
 
   private assertFeed(feed: Feed): void {
     if (!feed.id) throw new Error("A feed requires a stable id.");
-    if (!feed.destinations.length) throw new Error(`Feed "${feed.id}" has no destinations.`);
+    if (!feed.destinations.length)
+      throw new Error(`Feed "${feed.id}" has no destinations.`);
     for (const destination of feed.destinations) {
-      if (!this.publishers.has(destination)) throw new Error(`Feed "${feed.id}" references unknown publisher "${destination}".`);
+      if (!this.publishers.has(destination))
+        throw new Error(
+          `Feed "${feed.id}" references unknown publisher "${destination}".`,
+        );
     }
   }
-
 }

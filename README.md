@@ -13,12 +13,7 @@ npm install feedr
 ## Define a feed and a Bluesky account
 
 ```ts
-import {
-  BlueskyPublisher,
-  FeedRunner,
-  FeedScheduler,
-  type Feed,
-} from "feedr";
+import { BlueskyPublisher, FeedRunner, FeedScheduler, type Feed } from "feedr";
 
 const worldNews: Feed = {
   id: "reddit-worldnews",

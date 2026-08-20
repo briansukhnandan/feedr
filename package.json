@@ -16,20 +16,33 @@
       "import": "./dist/bluesky.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/**/*.test.ts",
-    "check": "npm run build && npm test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run build && npm test",
     "prepack": "npm run build"
   },
-  "keywords": ["feed", "bluesky", "scheduler", "cron", "publishing"],
+  "keywords": [
+    "feed",
+    "bluesky",
+    "scheduler",
+    "cron",
+    "publishing"
+  ],
   "dependencies": {
     "@atproto/api": "^0.16.0",
     "cron": "^4.3.3"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "prettier": "^3.9.6",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   },

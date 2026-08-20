@@ -8,7 +8,7 @@ export interface BlueskyCredentials {
 }
 
 export interface BlueskyPublisherOptions {
-  /** Stable identity used for idempotency, e.g. `bluesky:worldnews-tracker`. */
+  /** Publisher identity, e.g. `bluesky:worldnews-tracker`. */
   id: string;
   credentials: BlueskyCredentials;
   service?: string;

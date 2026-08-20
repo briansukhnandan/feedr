@@ -2,7 +2,7 @@
 
 `feedr` is a small TypeScript package for collecting normalized feed items and publishing them on a schedule. It keeps source collectors (Reddit, Congress.gov, RSS, etc.) separate from publishing platforms (Bluesky now; X or others later).
 
-It carries forward the useful BriNet patterns—cron execution, source/account-specific logging, post-after-success deduplication, and email-ready run notifications—without making Reddit, Congress.gov, SQLite, SendGrid, or Bluesky credentials part of the feed model.
+It provides the publishing loop and platform adapters only. Source collection, duplicate handling, and observability stay in the consuming application.
 
 ## Install
 
@@ -17,7 +17,6 @@ import {
   BlueskyPublisher,
   FeedRunner,
   FeedScheduler,
-  JsonFilePublicationStore,
   type Feed,
 } from "feedr";
 
@@ -28,7 +27,7 @@ const worldNews: Feed = {
   async collect() {
     const posts = await getRedditPosts(); // your application's collector
     return posts.map((post) => ({
-      id: post.id,                    // stable source ID: required for deduplication
+      id: post.id,
       text: `Posted on ${post.date}\n\n${post.title}`,
       url: `https://reddit.com${post.permalink}`,
       publishedAt: post.createdAt,
@@ -49,14 +48,6 @@ const runner = new FeedRunner({
       },
     }),
   ],
-  // Use your own SQL/Redis store in a multi-instance deployment.
-  store: new JsonFilePublicationStore("./data/feedr-publications.json"),
-  notifier: {
-    // Adapt SendGrid, Resend, SES, etc. in the host app.
-    async notify({ type, result }) {
-      if (type === "run-failed") await sendOpsEmail(result);
-    },
-  },
 });
 
 new FeedScheduler(runner, [{ feed: worldNews }]).start();
@@ -82,7 +73,7 @@ Each source yields `FeedItem` objects:
 }
 ```
 
-`thread` is optional. When present it maps to a Bluesky reply chain; when absent feedr publishes `text`, `url`, and `media` as one post. The Bluesky adapter detects link facets, uploads up to four images, truncates to the configured post limit, and logs in once per process. A post is marked published only after its destination confirms success. Publication state is scoped by feed, item, and destination, so a failed X publisher later can retry without reposting to Bluesky.
+`thread` is optional. When present it maps to a Bluesky reply chain; when absent feedr publishes `text`, `url`, and `media` as one post. The Bluesky adapter detects link facets, uploads up to four images, truncates to the configured post limit, and logs in once per process.
 
 ## Extending platforms
 
@@ -100,4 +91,4 @@ class XPublisher implements Publisher {
 }
 ```
 
-For production deployments, provide a `PublicationStore` backed by your existing database and enforce a unique `(feedId, itemId, publisherId)` index. `JsonFilePublicationStore` is intentionally a single-process convenience, suitable for the BriNet-style Raspberry Pi setup.
+`FeedRunner` deliberately does not deduplicate or persist run state. Every item returned by a collector is sent to every configured destination on each run.

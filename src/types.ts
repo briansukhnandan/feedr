@@ -1,6 +1,6 @@
-/** A source-independent unit of content. `id` must be stable across runs. */
+/** A source-independent unit of content. */
 export interface FeedItem {
-  /** Stable source identifier, e.g. a Reddit post id or a Congress action id. */
+  /** Source identifier, e.g. a Reddit post id or a Congress action id. */
   id: string;
   /** Main text for a one-post item. Ignored when `thread` is supplied. */
   text: string;
@@ -40,11 +40,10 @@ export interface FeedMedia {
 export interface FeedRunContext {
   signal?: AbortSignal;
   now: Date;
-  logger: FeedLogger;
 }
 
 export interface Feed {
-  /** Stable feed identity. It namespaces idempotency state and log events. */
+  /** Stable feed identity, useful to the host application's scheduling and observability. */
   id: string;
   name?: string;
   /** A cron expression used by `FeedScheduler`; no schedule is required for manual runs. */
@@ -69,7 +68,6 @@ export interface Publisher {
 export interface PublishContext {
   feed: Feed;
   signal?: AbortSignal;
-  logger: FeedLogger;
 }
 
 export interface PublicationReceipt {
@@ -80,52 +78,12 @@ export interface PublicationReceipt {
   metadata?: Record<string, unknown>;
 }
 
-export interface PublicationStore {
-  wasPublished(feedId: string, itemId: string, publisherId: string): Promise<boolean>;
-  markPublished(record: PublishedRecord): Promise<void>;
-}
-
-export interface PublishedRecord {
-  feedId: string;
-  itemId: string;
-  publisherId: string;
-  receipt: PublicationReceipt;
-  publishedAt: Date;
-}
-
-export type LogLevel = "debug" | "info" | "warn" | "error";
-
-export interface LogEvent {
-  level: LogLevel;
-  message: string;
-  at: Date;
-  feedId?: string;
-  publisherId?: string;
-  itemId?: string;
-  error?: unknown;
-  data?: Record<string, unknown>;
-}
-
-export interface FeedLogger {
-  log(event: LogEvent): void | Promise<void>;
-}
-
-export interface FeedNotifier {
-  notify(notification: FeedNotification): void | Promise<void>;
-}
-
-export interface FeedNotification {
-  type: "run-completed" | "run-failed";
-  result: FeedRunResult;
-}
-
 export interface FeedRunResult {
   feedId: string;
   startedAt: Date;
   finishedAt: Date;
   collected: number;
   published: number;
-  skipped: number;
   failed: number;
   errors: FeedRunError[];
 }

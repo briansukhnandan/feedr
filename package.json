@@ -46,7 +46,7 @@
     "publishing"
   ],
   "dependencies": {
-    "@atproto/api": "^0.16.0",
+    "@atproto/api": "^0.20.41",
     "cron": "^4.3.3"
   },
   "devDependencies": {

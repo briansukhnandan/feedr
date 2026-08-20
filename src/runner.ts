@@ -66,6 +66,7 @@ export class FeedRunner {
     if (!feed.id) throw new Error("A feed requires a stable id.");
     if (!feed.destinations.length)
       throw new Error(`Feed "${feed.id}" has no destinations.`);
+
     for (const destination of feed.destinations) {
       if (!this.publishers.has(destination))
         throw new Error(

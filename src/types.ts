@@ -2,20 +2,26 @@
 export interface FeedItem {
   /** Source identifier, e.g. a Reddit post id or a Congress action id. */
   id: string;
+
   /** Main text for a one-post item. Ignored when `thread` is supplied. */
   text: string;
+
   /** Canonical source URL. Publishers can render this as a rich link. */
   url?: string;
+
   /** Original source timestamp, retained for formatters and audit logs. */
   publishedAt?: Date | string;
+
   /** Optional media accompanying the root post. */
   media?: FeedMedia[];
+
   /**
    * An ordered series of posts. The first segment is the root; later segments
    * are replies to the preceding segment. This maps to a Bluesky thread today
    * and leaves room for a native X thread later.
    */
   thread?: FeedPost[];
+
   /** Arbitrary source data for a consuming app's formatter or publisher. */
   metadata?: Record<string, unknown>;
 }
@@ -46,10 +52,13 @@ export interface Feed {
   /** Stable feed identity, useful to the host application's scheduling and observability. */
   id: string;
   name?: string;
+
   /** A cron expression used by `FeedScheduler`; no schedule is required for manual runs. */
   schedule?: CronSchedule;
+
   /** Publisher ids that should receive every collected item. */
   destinations: string[];
+
   /** Collect source data and return normalized, stable-id items. */
   collect(
     context: FeedRunContext,

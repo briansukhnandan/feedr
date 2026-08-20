@@ -17,8 +17,10 @@ export interface BlueskyCredentials {
 export interface BlueskyPublisherOptions {
   /** Publisher identity, e.g. `bluesky:worldnews-tracker`. */
   id: string;
+
   credentials: BlueskyCredentials;
   service?: string;
+
   /** Defaults to 300, Bluesky's current post limit. */
   maxGraphemes?: number;
 }
@@ -47,9 +49,11 @@ export class BlueskyPublisher implements Publisher {
     context: PublishContext,
   ): Promise<PublicationReceipt> {
     await this.prepare();
+
     const segments = item.thread?.length
       ? item.thread
       : [{ text: item.text, url: item.url, media: item.media }];
+
     let root: StrongRef | undefined;
     let parent: StrongRef | undefined;
     let last: StrongRef | undefined;
@@ -61,8 +65,10 @@ export class BlueskyPublisher implements Publisher {
       parent = ref;
       last = ref;
     }
+
     if (!last)
       throw new Error("A Bluesky item must contain at least one post.");
+
     return {
       id: last.uri,
       url: `https://bsky.app/profile/${this.agent.session?.did}/post/${last.uri.split("/").at(-1)}`,
@@ -113,9 +119,11 @@ export class BlueskyPublisher implements Publisher {
       media.slice(0, 4).map(async (image) => {
         const bytes =
           image.data ?? (await this.fetchMedia(image, context.signal));
+        
         const upload = await this.agent.uploadBlob(bytes, {
           encoding: image.mimeType,
         });
+
         return {
           alt: image.alt,
           image: upload.data.blob,
@@ -134,11 +142,14 @@ export class BlueskyPublisher implements Publisher {
     signal?: AbortSignal,
   ): Promise<Uint8Array> {
     if (!media.url) throw new Error("Feed media requires either data or url.");
+
     const response = await fetch(media.url, { signal });
+
     if (!response.ok)
       throw new Error(
         `Could not fetch media (${response.status}) from ${media.url}.`,
       );
+
     return new Uint8Array(await response.arrayBuffer());
   }
 

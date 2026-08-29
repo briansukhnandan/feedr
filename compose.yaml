@@ -1,0 +1,13 @@
+services:
+  feedr:
+    build: .
+    image: feedr:local
+    restart: unless-stopped
+    # Match the host user's permissions so the delivery journal is writable.
+    user: "${FEEDR_UID:-1000}:${FEEDR_GID:-1000}"
+    environment:
+      FEEDR_HOME: /feedr
+      FEEDR_BLUESKY_IDENTIFIER: ${FEEDR_BLUESKY_IDENTIFIER}
+      FEEDR_BLUESKY_APP_PASSWORD: ${FEEDR_BLUESKY_APP_PASSWORD}
+    volumes:
+      - "${FEEDR_DATA_DIR:-$HOME/.feedr}:/feedr"

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "release-2026-08-29",
+    "text": "We shipped a new release.",
+    "url": "https://example.com/releases/2026-08-29",
+    "publishedAt": "2026-08-29T09:00:00Z",
+    "media": [
+      {
+        "alt": "A screenshot of the release",
+        "mimeType": "image/png",
+        "url": "https://example.com/release.png",
+        "width": 1200,
+        "height": 630
+      }
+    ],
+    "metadata": {
+      "source": "release-notes"
+    }
+  }
+]

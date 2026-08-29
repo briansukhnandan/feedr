@@ -1,0 +1,15 @@
+FROM golang:1.24-alpine AS build
+
+WORKDIR /src
+COPY go.mod ./
+COPY cmd ./cmd
+COPY internal ./internal
+RUN go test ./... && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/feedr ./cmd/feedr
+
+FROM scratch
+
+COPY --from=build /out/feedr /usr/local/bin/feedr
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+ENV FEEDR_HOME=/feedr
+VOLUME ["/feedr"]
+ENTRYPOINT ["/usr/local/bin/feedr"]

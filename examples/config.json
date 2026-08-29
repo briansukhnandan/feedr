@@ -1,0 +1,12 @@
+{
+  "pollIntervalSeconds": 60,
+  "timezone": "America/New_York",
+  "publishers": [
+    {
+      "id": "bluesky:my-account",
+      "type": "bluesky",
+      "identifierEnv": "FEEDR_BLUESKY_IDENTIFIER",
+      "appPasswordEnv": "FEEDR_BLUESKY_APP_PASSWORD"
+    }
+  ]
+}

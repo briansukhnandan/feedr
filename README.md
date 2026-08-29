@@ -40,29 +40,36 @@ credentials are not saved in `config.json`.
 ~/.feedr/
 ├── config.json
 ├── 2026_08_29/
-│   └── posts.json
+│   ├── posts.json
+│   └── nodes/
+│       ├── reddit/posts.json
+│       └── congress/posts.json
+├── credentials.env             # account credentials; mode 0600
 └── .state/
     └── deliveries.json       # maintained by feedr
 ```
 
 On startup and every `pollIntervalSeconds` (60 seconds by default), feedr
-looks only for today's `YYYY_MM_DD/posts.json` in the configured IANA timezone
-(UTC by default). It safely ignores a day with no file. It reloads
-configuration and the posts file on every pass, so generators and configuration
-can update them without restarting the daemon.
+looks for today's named-node files and, when `defaultFeed` is configured, the
+top-level `YYYY_MM_DD/posts.json`. The date uses the configured IANA timezone
+(UTC by default). It safely ignores missing files and reloads configuration and
+posts on every pass, so generators can update them without restarting the
+daemon.
 
-The delivery journal is keyed by date, stable post ID, and publisher ID. Once a
-delivery is recorded it is not sent again by ordinary polling passes. Preserve
-stable IDs when regenerating a file. This is **at-least-once** delivery: an
-abrupt process or filesystem failure after the remote API accepts a post but
-before the journal is saved can cause a duplicate after the daemon restarts.
+The delivery journal is keyed by date, feed ID, stable post ID, and destination
+account. Once a delivery is recorded it is not sent again by ordinary polling
+passes. Preserve stable IDs when regenerating a file. This is **at-least-once**
+delivery: an abrupt process or filesystem failure after the remote API accepts
+a post but before the journal is saved can cause a duplicate after the daemon
+restarts.
 
 Do not edit `.state/deliveries.json` except to intentionally force a retry.
 
 ## Configuration
 
-`~/.feedr/config.json` selects publishers. Every post goes to every listed
-publisher.
+`~/.feedr/config.json` has three separate concerns: publisher implementations,
+their accounts, and feed-to-account routing. A feed does not carry credentials
+or choose an account; the parent owns that mapping.
 
 ```json
 {
@@ -70,19 +77,65 @@ publisher.
   "timezone": "America/New_York",
   "publishers": [
     {
-      "id": "bluesky:main",
+      "id": "bluesky",
       "type": "bluesky",
-      "identifierEnv": "FEEDR_BLUESKY_IDENTIFIER",
-      "appPasswordEnv": "FEEDR_BLUESKY_APP_PASSWORD"
+      "accounts": [
+        {
+          "id": "brinet-reddit",
+          "identifierEnv": "FEEDR_REDDIT_BLUESKY_IDENTIFIER",
+          "appPasswordEnv": "FEEDR_REDDIT_BLUESKY_APP_PASSWORD"
+        },
+        {
+          "id": "brinet-congress",
+          "identifierEnv": "FEEDR_CONGRESS_BLUESKY_IDENTIFIER",
+          "appPasswordEnv": "FEEDR_CONGRESS_BLUESKY_APP_PASSWORD"
+        }
+      ]
+    }
+  ],
+  "feeds": [
+    {
+      "id": "reddit",
+      "destinations": [
+        { "publisher": "bluesky", "account": "brinet-reddit" }
+      ]
+    },
+    {
+      "id": "congress",
+      "destinations": [
+        { "publisher": "bluesky", "account": "brinet-congress" }
+      ]
     }
   ]
 }
 ```
 
-`identifier` and `appPassword` can also be set directly, but environment
-variables are the recommended credential mechanism. A Bluesky publisher also
-accepts an optional `service` URL for a compatible PDS. Publisher IDs must be
-unique and are part of delivery de-duplication, so do not change them casually.
+For that configuration, the two nodes write to
+`YYYY_MM_DD/nodes/reddit/posts.json` and
+`YYYY_MM_DD/nodes/congress/posts.json`, respectively. The parent sends each
+file only to its configured account. A feed can list multiple destinations when
+intentional cross-posting is needed.
+
+The quick-start's one-account configuration uses `defaultFeed` to route the
+legacy top-level `YYYY_MM_DD/posts.json`. `defaultFeed` is optional; omit it
+when every producer is a named node.
+
+Account values can be supplied directly as `identifier` and `appPassword`, but
+environment variables are recommended. Compose reads arbitrary account
+variables from `~/.feedr/credentials.env`; for the configuration above it
+contains:
+
+```sh
+FEEDR_REDDIT_BLUESKY_IDENTIFIER=reddit.example
+FEEDR_REDDIT_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+FEEDR_CONGRESS_BLUESKY_IDENTIFIER=congress.example
+FEEDR_CONGRESS_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+The quick-start creates a 0600 credentials file for its single sample account
+once. Add account-specific values yourself, or set `FEEDR_CREDENTIALS_FILE` to
+an existing protected env file before running the script. A Bluesky account
+also accepts an optional `service` URL for a compatible PDS.
 
 ## `posts.json`
 
@@ -124,7 +177,7 @@ partial document:
 set -eu
 
 day="$(date +%Y_%m_%d)"
-target="$HOME/.feedr/$day"
+target="$HOME/.feedr/$day/nodes/reddit"
 mkdir -p "$target"
 your-generator-command >"$target/posts.json.tmp"
 mv "$target/posts.json.tmp" "$target/posts.json"
@@ -154,11 +207,9 @@ docker run --rm \
   feedr:local
 ```
 
-## Child nodes: proposed next step
+## Child nodes
 
-The implementation intentionally stops at the shared file boundary. The
-recommended follow-on is a `feedr-node` runner that schedules a user command,
-validates its JSON, and atomically publishes it to a shared volume. It should
-not use a port-per-node or give generators publisher credentials. The detailed
-proposal, including the remaining merge and ownership decisions, is in
+Named child-node directories and parent-side routing are implemented. A future
+`feedr-node` runner can add portable command scheduling and JSON validation;
+the execution model and boundary rationale are in
 [docs/child-nodes.md](docs/child-nodes.md).

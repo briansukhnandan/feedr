@@ -17,7 +17,7 @@ func TestReadPostsAcceptsCurrentFeedItemShape(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	posts, found, err := NewDaemon(dir, nil).readPosts(day)
+	posts, found, err := NewDaemon(dir, nil).readPosts(filepath.Join(dir, day, "posts.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestReadPostsRejectsMediaWithoutAltText(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, found, err := NewDaemon(dir, nil).readPosts(day)
+	_, found, err := NewDaemon(dir, nil).readPosts(filepath.Join(dir, day, "posts.json"))
 	if !found || err == nil {
 		t.Fatalf("found = %t, err = %v", found, err)
 	}

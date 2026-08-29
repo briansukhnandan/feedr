@@ -17,17 +17,34 @@ const (
 type Config struct {
 	PollIntervalSeconds int               `json:"pollIntervalSeconds,omitempty"`
 	Timezone            string            `json:"timezone,omitempty"`
+	DefaultFeed          string            `json:"defaultFeed,omitempty"`
 	Publishers          []PublisherConfig `json:"publishers"`
+	Feeds               []FeedConfig      `json:"feeds"`
 }
 
 type PublisherConfig struct {
+	ID       string          `json:"id"`
+	Type     string          `json:"type"`
+	Accounts []AccountConfig `json:"accounts"`
+}
+
+type AccountConfig struct {
 	ID             string `json:"id"`
-	Type           string `json:"type"`
 	Identifier     string `json:"identifier,omitempty"`
 	IdentifierEnv  string `json:"identifierEnv,omitempty"`
 	AppPassword    string `json:"appPassword,omitempty"`
 	AppPasswordEnv string `json:"appPasswordEnv,omitempty"`
 	Service        string `json:"service,omitempty"`
+}
+
+type FeedConfig struct {
+	ID           string              `json:"id"`
+	Destinations []DestinationConfig `json:"destinations"`
+}
+
+type DestinationConfig struct {
+	Publisher string `json:"publisher"`
+	Account   string `json:"account"`
 }
 
 func DataDirFromEnvironment() (string, error) {
@@ -57,6 +74,9 @@ func readConfig(dir string) (Config, error) {
 	if len(config.Publishers) == 0 {
 		return Config{}, fmt.Errorf("configuration has no publishers")
 	}
+	if len(config.Feeds) == 0 {
+		return Config{}, fmt.Errorf("configuration has no feeds")
+	}
 	if config.PollIntervalSeconds == 0 {
 		config.PollIntervalSeconds = 60
 	}
@@ -70,18 +90,57 @@ func readConfig(dir string) (Config, error) {
 		return Config{}, fmt.Errorf("timezone %q is invalid: %w", config.Timezone, err)
 	}
 
-	seen := make(map[string]bool, len(config.Publishers))
+	publishers := make(map[string]PublisherConfig, len(config.Publishers))
 	for i, publisher := range config.Publishers {
 		if publisher.ID == "" || publisher.Type == "" {
 			return Config{}, fmt.Errorf("publisher %d requires id and type", i)
 		}
-		if seen[publisher.ID] {
+		if _, exists := publishers[publisher.ID]; exists {
 			return Config{}, fmt.Errorf("publisher id %q is duplicated", publisher.ID)
 		}
-		seen[publisher.ID] = true
 		if publisher.Type != "bluesky" {
 			return Config{}, fmt.Errorf("publisher %q has unsupported type %q", publisher.ID, publisher.Type)
 		}
+		if len(publisher.Accounts) == 0 {
+			return Config{}, fmt.Errorf("publisher %q has no accounts", publisher.ID)
+		}
+		accounts := make(map[string]bool, len(publisher.Accounts))
+		for accountIndex, account := range publisher.Accounts {
+			if account.ID == "" {
+				return Config{}, fmt.Errorf("publisher %q account %d requires id", publisher.ID, accountIndex)
+			}
+			if accounts[account.ID] {
+				return Config{}, fmt.Errorf("publisher %q account id %q is duplicated", publisher.ID, account.ID)
+			}
+			accounts[account.ID] = true
+		}
+		publishers[publisher.ID] = publisher
+	}
+
+	feeds := make(map[string]bool, len(config.Feeds))
+	for index, feed := range config.Feeds {
+		if feed.ID == "" {
+			return Config{}, fmt.Errorf("feed %d requires id", index)
+		}
+		if feeds[feed.ID] {
+			return Config{}, fmt.Errorf("feed id %q is duplicated", feed.ID)
+		}
+		feeds[feed.ID] = true
+		if len(feed.Destinations) == 0 {
+			return Config{}, fmt.Errorf("feed %q has no destinations", feed.ID)
+		}
+		for _, destination := range feed.Destinations {
+			publisher, exists := publishers[destination.Publisher]
+			if !exists {
+				return Config{}, fmt.Errorf("feed %q references unknown publisher %q", feed.ID, destination.Publisher)
+			}
+			if !publisher.hasAccount(destination.Account) {
+				return Config{}, fmt.Errorf("feed %q references unknown account %q on publisher %q", feed.ID, destination.Account, destination.Publisher)
+			}
+		}
+	}
+	if config.DefaultFeed != "" && !feeds[config.DefaultFeed] {
+		return Config{}, fmt.Errorf("defaultFeed %q is not configured", config.DefaultFeed)
 	}
 	return config, nil
 }
@@ -92,27 +151,49 @@ func (c Config) location() *time.Location {
 	return location
 }
 
-func (p PublisherConfig) credential(value, environment, label string) (string, error) {
+func (p PublisherConfig) hasAccount(id string) bool {
+	for _, account := range p.Accounts {
+		if account.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (a AccountConfig) credential(publisherID, value, environment, label string) (string, error) {
 	if environment != "" {
 		if resolved := os.Getenv(environment); resolved != "" {
 			return resolved, nil
 		}
-		return "", fmt.Errorf("publisher %q: environment variable %s for %s is empty", p.ID, environment, label)
+		return "", fmt.Errorf("publisher %q account %q: environment variable %s for %s is empty", publisherID, a.ID, environment, label)
 	}
 	if value == "" {
-		return "", fmt.Errorf("publisher %q: %s is required", p.ID, label)
+		return "", fmt.Errorf("publisher %q account %q: %s is required", publisherID, a.ID, label)
 	}
 	return value, nil
 }
 
-func (p PublisherConfig) newPublisher() (Publisher, error) {
-	identifier, err := p.credential(p.Identifier, p.IdentifierEnv, "identifier")
+func (p PublisherConfig) newPublisher(account AccountConfig) (Publisher, error) {
+	identifier, err := account.credential(p.ID, account.Identifier, account.IdentifierEnv, "identifier")
 	if err != nil {
 		return nil, err
 	}
-	password, err := p.credential(p.AppPassword, p.AppPasswordEnv, "app password")
+	password, err := account.credential(p.ID, account.AppPassword, account.AppPasswordEnv, "app password")
 	if err != nil {
 		return nil, err
 	}
-	return newBlueskyPublisher(p.ID, identifier, password, strings.TrimRight(p.Service, "/")), nil
+	return newBlueskyPublisher(p.ID+":"+account.ID, identifier, password, strings.TrimRight(account.Service, "/")), nil
+}
+
+func (c Config) feed(id string) (FeedConfig, bool) {
+	for _, feed := range c.Feeds {
+		if feed.ID == id {
+			return feed, true
+		}
+	}
+	return FeedConfig{}, false
+}
+
+func destinationKey(destination DestinationConfig) string {
+	return destination.Publisher + "\x00" + destination.Account
 }

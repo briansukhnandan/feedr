@@ -11,18 +11,19 @@ with the daemon, never with content-generating scripts.
 
 ## Quick start
 
-Create the data directory and install configuration:
+Set the two credentials and run the deployment script:
 
 ```sh
-mkdir -p "$HOME/.feedr/$(date +%Y_%m_%d)"
-cp examples/config.json "$HOME/.feedr/config.json"
-cp examples/posts.json "$HOME/.feedr/$(date +%Y_%m_%d)/posts.json"
 export FEEDR_BLUESKY_IDENTIFIER='you.bsky.social'
 export FEEDR_BLUESKY_APP_PASSWORD='xxxx-xxxx-xxxx-xxxx'
-export FEEDR_UID="$(id -u)"
-export FEEDR_GID="$(id -g)"
-docker compose up --build -d
+./scripts/quickstart.sh
 ```
+
+The script creates `config.json` and today's example `posts.json` only when
+they do not already exist; it never replaces your configuration or generated
+content. It derives the host UID/GID, stops the existing `feedr` container,
+then builds and force-recreates it. Run it again after changing this repository
+or your deployment settings.
 
 The bundled Compose file mounts `$HOME/.feedr` at `/feedr` in the container.
 The container sets `FEEDR_HOME=/feedr`, so it observes the host directory while

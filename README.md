@@ -14,7 +14,13 @@ with the daemon, never with content-generating scripts.
 Initialize the local feedr directory and deploy the daemon:
 
 ```sh
-./scripts/quickstart.sh
+make start
+```
+
+To open a shell in the running container:
+
+```sh
+make shell
 ```
 
 On its first run, the script creates `~/.feedr/`, `config.json`, today's
@@ -172,10 +178,15 @@ content collection, so it does not need to know the generator’s language.
 
 ## Development
 
-The daemon is a standard-library-only Go module. Build and test locally with:
+The daemon is a standard-library-only Go module. Test locally with:
 
 ```sh
-go test ./...
+make test
+```
+
+To build the Go binary locally:
+
+```sh
 go build ./cmd/feedr
 ```
 

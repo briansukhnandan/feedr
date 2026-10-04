@@ -8,7 +8,7 @@ COPY cmd ./cmd
 COPY internal ./internal
 RUN go test ./... && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/feedr ./cmd/feedr
 
-FROM scratch
+FROM alpine:3.22
 
 COPY --from=build /out/feedr /usr/local/bin/feedr
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

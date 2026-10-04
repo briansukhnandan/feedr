@@ -16,7 +16,7 @@ func TestDeliveryStoreRecordsDeliveries(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, stateDirName, "deliveries.db")); err != nil {
 		t.Fatalf("delivery database was not created: %v", err)
 	}
-	key := "2026_10_03|reddit|item-42|bluesky:brinet-reddit"
+	key := "2026_10_03|news|item-42|bluesky:main"
 	if err := store.record(key, Receipt{ID: "at://example/post", PublishedAt: time.Now().UTC()}); err != nil {
 		t.Fatal(err)
 	}

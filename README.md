@@ -2,8 +2,6 @@
 
 `feedr` is a local, file-driven publishing daemon. Run it in Docker, let any
 language generate JSON posts, and feedr sends them to configured publishers.
-The first publisher is Bluesky; X is intentionally reserved for a future
-adapter.
 
 There is no application SDK in this design. A Python script, Node script, shell
 script, or CI job only needs to write a JSON file. Publisher credentials remain
@@ -53,10 +51,6 @@ The bundled Compose file mounts `$HOME/.feedr` at `/feedr` in the container.
 The container sets `FEEDR_HOME=/feedr`, so it observes the host directory while
 the native binary uses `$HOME/.feedr` by default. Set `FEEDR_DATA_DIR` before
 starting Compose to mount a different host directory.
-
-Use a [Bluesky app password](https://bsky.app/settings/app-passwords), not your
-normal account password. The example references environment variables so
-credentials are not saved in `config.json`.
 
 ## Directory contract
 

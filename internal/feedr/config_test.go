@@ -14,12 +14,12 @@ func TestConfigRoutesFeedsToPublisherAccounts(t *testing.T) {
     "id": "bluesky",
     "type": "bluesky",
     "accounts": [
-      {"id": "reddit", "identifier": "reddit.example", "appPassword": "reddit-password"},
+      {"id": "secondary", "identifier": "secondary.example", "appPassword": "secondary-password"},
       {"id": "congress", "identifier": "congress.example", "appPassword": "congress-password"}
     ]
   }],
   "feeds": [
-    {"id": "reddit", "destinations": [{"publisher": "bluesky", "account": "reddit"}]},
+    {"id": "secondary", "destinations": [{"publisher": "bluesky", "account": "secondary"}]},
     {"id": "congress", "destinations": [{"publisher": "bluesky", "account": "congress"}]}
   ]
 }`

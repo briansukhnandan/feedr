@@ -5,7 +5,7 @@ start:
 	@echo "Started feedr!"
 
 test:
-	go test ./...
+	docker build --target test .
 
 shell:
 	docker compose exec feedr /bin/sh

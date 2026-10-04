@@ -178,16 +178,11 @@ content collection, so it does not need to know the generator’s language.
 
 ## Development
 
-The daemon is a standard-library-only Go module. Test locally with:
+The daemon builds and tests in Docker, so no local Go installation is needed.
+Run the test suite with:
 
 ```sh
 make test
-```
-
-To build the Go binary locally:
-
-```sh
-go build ./cmd/feedr
 ```
 
 Or run it in the container:

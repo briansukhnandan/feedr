@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.24-alpine AS test
 
 ENV PATH=/usr/local/go/bin:$PATH
 
@@ -6,7 +6,11 @@ WORKDIR /src
 COPY go.mod go.sum ./
 COPY cmd ./cmd
 COPY internal ./internal
-RUN go test ./... && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/feedr ./cmd/feedr
+RUN go test ./...
+
+FROM test AS build
+
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/feedr ./cmd/feedr
 
 FROM alpine:3.22
 

@@ -7,7 +7,7 @@ services:
     user: "${FEEDR_UID:-1000}:${FEEDR_GID:-1000}"
     # This file can contain credentials for any number of configured accounts.
     env_file:
-      - "${FEEDR_CREDENTIALS_FILE:-$HOME/.feedr/credentials.env}"
+      - "${FEEDR_DATA_DIR:-$HOME/.feedr}/.env"
     environment:
       FEEDR_HOME: /feedr
     volumes:

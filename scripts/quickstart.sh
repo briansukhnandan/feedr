@@ -10,7 +10,7 @@ today=$(date +%Y_%m_%d)
 export FEEDR_DATA_DIR="$feedr_data_dir"
 export FEEDR_UID=${FEEDR_UID:-"$(id -u)"}
 export FEEDR_GID=${FEEDR_GID:-"$(id -g)"}
-export FEEDR_CREDENTIALS_FILE=${FEEDR_CREDENTIALS_FILE:-"$FEEDR_DATA_DIR/credentials.env"}
+feedr_env_file="$FEEDR_DATA_DIR/.env"
 
 mkdir -p "$FEEDR_DATA_DIR/$today"
 
@@ -24,18 +24,12 @@ if [ ! -f "$FEEDR_DATA_DIR/$today/posts.json" ]; then
   printf '%s\n' "Created $FEEDR_DATA_DIR/$today/posts.json"
 fi
 
-# Compose reads account credentials from this file, which also lets a deployment
-# provide an arbitrary number of account-specific environment variables.
-if [ ! -f "$FEEDR_CREDENTIALS_FILE" ]; then
-  : "${FEEDR_BLUESKY_IDENTIFIER:?Set FEEDR_BLUESKY_IDENTIFIER to your Bluesky handle or email.}"
-  : "${FEEDR_BLUESKY_APP_PASSWORD:?Set FEEDR_BLUESKY_APP_PASSWORD to a Bluesky app password.}"
-  mkdir -p "$(dirname -- "$FEEDR_CREDENTIALS_FILE")"
+# Compose reads account credentials from this file. Leave it empty until
+# credentials are ready, then add any account-specific environment variables.
+if [ ! -e "$feedr_env_file" ]; then
   umask 077
-  {
-    printf 'FEEDR_BLUESKY_IDENTIFIER=%s\n' "$FEEDR_BLUESKY_IDENTIFIER"
-    printf 'FEEDR_BLUESKY_APP_PASSWORD=%s\n' "$FEEDR_BLUESKY_APP_PASSWORD"
-  } >"$FEEDR_CREDENTIALS_FILE"
-  printf '%s\n' "Created $FEEDR_CREDENTIALS_FILE"
+  : >"$feedr_env_file"
+  printf '%s\n' "Created $feedr_env_file"
 fi
 
 # Stop first so a deploy has an explicit, predictable handoff. `up` then

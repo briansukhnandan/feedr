@@ -11,19 +11,25 @@ with the daemon, never with content-generating scripts.
 
 ## Quick start
 
-Set the two credentials and run the deployment script:
+Initialize the local feedr directory and deploy the daemon:
 
 ```sh
-export FEEDR_BLUESKY_IDENTIFIER='you.bsky.social'
-export FEEDR_BLUESKY_APP_PASSWORD='xxxx-xxxx-xxxx-xxxx'
 ./scripts/quickstart.sh
 ```
 
-The script creates `config.json` and today's example `posts.json` only when
-they do not already exist; it never replaces your configuration or generated
-content. It derives the host UID/GID, stops the existing `feedr` container,
-then builds and force-recreates it. Run it again after changing this repository
-or your deployment settings.
+On its first run, the script creates `~/.feedr/`, `config.json`, today's
+example `posts.json`, and an empty, mode-0600 `~/.feedr/.env`. It never
+replaces existing configuration or generated content. Add your account values
+to `.env`, then rerun the script to deploy with them:
+
+```sh
+FEEDR_BLUESKY_IDENTIFIER=you.bsky.social
+FEEDR_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+The script derives the host UID/GID, stops the existing `feedr` container, then
+builds and force-recreates it. Run it again after changing this repository or
+your deployment settings.
 
 The bundled Compose file mounts `$HOME/.feedr` at `/feedr` in the container.
 The container sets `FEEDR_HOME=/feedr`, so it observes the host directory while
@@ -41,7 +47,7 @@ credentials are not saved in `config.json`.
 ├── config.json
 ├── 2026_08_29/
 │   └── posts.json
-├── credentials.env             # account credentials; mode 0600
+├── .env                         # account credentials; mode 0600
 └── state/
     └── deliveries.db         # maintained by feedr
 ```
@@ -102,7 +108,7 @@ is needed. `defaultFeed` is required and selects the route for that file.
 
 Account values can be supplied directly as `identifier` and `appPassword`, but
 environment variables are recommended. Compose reads arbitrary account
-variables from `~/.feedr/credentials.env`; for the configuration above it
+variables from `~/.feedr/.env`; for the configuration above it
 contains:
 
 ```sh
@@ -110,10 +116,9 @@ FEEDR_BLUESKY_IDENTIFIER=example.bsky.social
 FEEDR_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 ```
 
-The quick-start creates a 0600 credentials file for its single sample account
-once. Add account-specific values yourself, or set `FEEDR_CREDENTIALS_FILE` to
-an existing protected env file before running the script. A Bluesky account
-also accepts an optional `service` URL for a compatible PDS.
+The quick-start creates an empty, mode-0600 `.env` file once. Add
+account-specific values there. A Bluesky account also accepts an optional
+`service` URL for a compatible PDS.
 
 ## `posts.json`
 

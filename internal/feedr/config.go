@@ -17,7 +17,6 @@ const (
 type Config struct {
 	PollIntervalSeconds int               `json:"pollIntervalSeconds,omitempty"`
 	Timezone            string            `json:"timezone,omitempty"`
-	DefaultFeed         string            `json:"defaultFeed,omitempty"`
 	Publishers          []PublisherConfig `json:"publishers"`
 	Feeds               []FeedConfig      `json:"feeds"`
 }
@@ -122,6 +121,9 @@ func readConfig(dir string) (Config, error) {
 		if feed.ID == "" {
 			return Config{}, fmt.Errorf("feed %d requires id", index)
 		}
+		if feed.ID == "." || strings.ContainsAny(feed.ID, `/\\`) {
+			return Config{}, fmt.Errorf("feed id %q must not contain a path separator", feed.ID)
+		}
 		if feeds[feed.ID] {
 			return Config{}, fmt.Errorf("feed id %q is duplicated", feed.ID)
 		}
@@ -138,12 +140,6 @@ func readConfig(dir string) (Config, error) {
 				return Config{}, fmt.Errorf("feed %q references unknown account %q on publisher %q", feed.ID, destination.Account, destination.Publisher)
 			}
 		}
-	}
-	if config.DefaultFeed == "" {
-		return Config{}, fmt.Errorf("defaultFeed is required")
-	}
-	if !feeds[config.DefaultFeed] {
-		return Config{}, fmt.Errorf("defaultFeed %q is not configured", config.DefaultFeed)
 	}
 	return config, nil
 }

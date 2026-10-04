@@ -56,8 +56,10 @@ func (d *Daemon) processCurrentDay(ctx context.Context, config Config) {
 	}
 	defer deliveries.close()
 	publishers := d.newPublishers(config)
-	feed, _ := config.feed(config.DefaultFeed)
-	d.processFeedFile(ctx, date, feed, filepath.Join(d.dir, date, "posts.json"), publishers, deliveries)
+	for _, feed := range config.Feeds {
+		path := filepath.Join(d.dir, date, "feeds", feed.ID, "posts.json")
+		d.processFeedFile(ctx, date, feed, path, publishers, deliveries)
+	}
 }
 
 func (d *Daemon) newPublishers(config Config) map[string]Publisher {

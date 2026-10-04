@@ -1,7 +1,6 @@
 {
   "pollIntervalSeconds": 60,
   "timezone": "America/New_York",
-  "defaultFeed": "example",
   "publishers": [
     {
       "id": "bluesky",

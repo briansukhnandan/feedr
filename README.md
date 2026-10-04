@@ -30,7 +30,7 @@ make export
 ```
 
 On its first run, the script creates `~/.feedr/`, `config.json`, today's
-example `posts.json`, and an empty, mode-0600 `~/.feedr/.env`. It never
+example feed file, and an empty, mode-0600 `~/.feedr/.env`. It never
 replaces existing configuration or generated content. Add your account values
 to `.env`, then rerun the script to deploy with them:
 
@@ -58,15 +58,17 @@ credentials are not saved in `config.json`.
 ~/.feedr/
 ├── config.json
 ├── 2026_08_29/
-│   └── posts.json
+│   └── feeds/
+│       └── example/posts.json
 ├── .env                         # account credentials; mode 0600
 └── state/
     └── deliveries.db         # maintained by feedr
 ```
 
 On startup and every `pollIntervalSeconds` (60 seconds by default), feedr
-looks for today's `YYYY_MM_DD/posts.json`. The date uses the configured IANA
-timezone (UTC by default). It safely ignores a missing file and reloads
+looks for each configured feed at
+`YYYY_MM_DD/feeds/<feed-id>/posts.json`. The date uses the configured IANA
+timezone (UTC by default). It safely ignores missing files and reloads
 configuration and posts on every pass, so generators can update them without
 restarting the daemon.
 
@@ -89,7 +91,6 @@ or choose an account; the parent owns that mapping.
 {
   "pollIntervalSeconds": 60,
   "timezone": "America/New_York",
-  "defaultFeed": "example",
   "publishers": [
     {
       "id": "bluesky",
@@ -114,9 +115,11 @@ or choose an account; the parent owns that mapping.
 }
 ```
 
-For that configuration, feedr sends `YYYY_MM_DD/posts.json` to the configured
-account. A feed can list multiple destinations when intentional cross-posting
-is needed. `defaultFeed` is required and selects the route for that file.
+For that configuration, feedr sends
+`YYYY_MM_DD/feeds/example/posts.json` to the configured account. Add a feed by
+adding its `id` and destinations to this list, then have its generator write to
+the matching directory. A feed can list multiple destinations when intentional
+cross-posting is needed. Directories without a configured feed ID are ignored.
 
 Account values can be supplied directly as `identifier` and `appPassword`, but
 environment variables are recommended. Compose reads arbitrary account
@@ -172,11 +175,14 @@ partial document:
 set -eu
 
 day="$(date +%Y_%m_%d)"
-target="$HOME/.feedr/$day"
+target="$HOME/.feedr/$day/feeds/example"
 mkdir -p "$target"
 your-generator-command >"$target/posts.json.tmp"
 mv "$target/posts.json.tmp" "$target/posts.json"
 ```
+
+Replace `example` with a feed ID from `config.json`. The generator does not
+register feeds or select destinations; the parent configuration owns both.
 
 Schedule that script using whichever scheduler fits its environment (cron, a
 CI schedule, systemd, Kubernetes, etc.). `feedr` owns publishing rather than

@@ -12,16 +12,17 @@ export FEEDR_UID=${FEEDR_UID:-"$(id -u)"}
 export FEEDR_GID=${FEEDR_GID:-"$(id -g)"}
 feedr_env_file="$FEEDR_DATA_DIR/.env"
 
-mkdir -p "$FEEDR_DATA_DIR/$today"
+example_feed_dir="$FEEDR_DATA_DIR/$today/feeds/example"
+mkdir -p "$example_feed_dir"
 
 # Preserve a user's generated content and publisher configuration on reruns.
 if [ ! -f "$FEEDR_DATA_DIR/config.json" ]; then
   cp "$project_dir/examples/config.json" "$FEEDR_DATA_DIR/config.json"
   printf '%s\n' "Created $FEEDR_DATA_DIR/config.json"
 fi
-if [ ! -f "$FEEDR_DATA_DIR/$today/posts.json" ]; then
-  cp "$project_dir/examples/posts.json" "$FEEDR_DATA_DIR/$today/posts.json"
-  printf '%s\n' "Created $FEEDR_DATA_DIR/$today/posts.json"
+if [ ! -f "$example_feed_dir/posts.json" ]; then
+  cp "$project_dir/examples/posts.json" "$example_feed_dir/posts.json"
+  printf '%s\n' "Created $example_feed_dir/posts.json"
 fi
 
 # Compose reads account credentials from this file. Leave it empty until

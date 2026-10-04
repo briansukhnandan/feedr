@@ -10,7 +10,6 @@ func TestConfigRoutesFeedsToPublisherAccounts(t *testing.T) {
 	dir := t.TempDir()
 	configJSON := `{
   "timezone": "UTC",
-  "defaultFeed": "reddit",
   "publishers": [{
     "id": "bluesky",
     "type": "bluesky",

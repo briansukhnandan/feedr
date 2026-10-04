@@ -196,7 +196,7 @@ content collection, so it does not need to know the generator’s language.
 
 ## Development
 
-The daemon builds and tests in Docker, so no local Go installation is needed.
+The only requirement to run this is `docker`
 Run the test suite with:
 
 ```sh

@@ -17,7 +17,7 @@ const (
 type Config struct {
 	PollIntervalSeconds int               `json:"pollIntervalSeconds,omitempty"`
 	Timezone            string            `json:"timezone,omitempty"`
-	DefaultFeed          string            `json:"defaultFeed,omitempty"`
+	DefaultFeed         string            `json:"defaultFeed,omitempty"`
 	Publishers          []PublisherConfig `json:"publishers"`
 	Feeds               []FeedConfig      `json:"feeds"`
 }
@@ -139,7 +139,10 @@ func readConfig(dir string) (Config, error) {
 			}
 		}
 	}
-	if config.DefaultFeed != "" && !feeds[config.DefaultFeed] {
+	if config.DefaultFeed == "" {
+		return Config{}, fmt.Errorf("defaultFeed is required")
+	}
+	if !feeds[config.DefaultFeed] {
 		return Config{}, fmt.Errorf("defaultFeed %q is not configured", config.DefaultFeed)
 	}
 	return config, nil

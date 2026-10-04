@@ -40,21 +40,17 @@ credentials are not saved in `config.json`.
 ~/.feedr/
 ├── config.json
 ├── 2026_08_29/
-│   ├── posts.json
-│   └── nodes/
-│       ├── reddit/posts.json
-│       └── congress/posts.json
+│   └── posts.json
 ├── credentials.env             # account credentials; mode 0600
 └── state/
     └── deliveries.db         # maintained by feedr
 ```
 
 On startup and every `pollIntervalSeconds` (60 seconds by default), feedr
-looks for today's named-node files and, when `defaultFeed` is configured, the
-top-level `YYYY_MM_DD/posts.json`. The date uses the configured IANA timezone
-(UTC by default). It safely ignores missing files and reloads configuration and
-posts on every pass, so generators can update them without restarting the
-daemon.
+looks for today's `YYYY_MM_DD/posts.json`. The date uses the configured IANA
+timezone (UTC by default). It safely ignores a missing file and reloads
+configuration and posts on every pass, so generators can update them without
+restarting the daemon.
 
 The delivery database is keyed by date, feed ID, stable post ID, and destination
 account. Once a delivery is recorded it is not sent again by ordinary polling
@@ -75,50 +71,34 @@ or choose an account; the parent owns that mapping.
 {
   "pollIntervalSeconds": 60,
   "timezone": "America/New_York",
+  "defaultFeed": "example",
   "publishers": [
     {
       "id": "bluesky",
       "type": "bluesky",
       "accounts": [
         {
-          "id": "brinet-reddit",
-          "identifierEnv": "FEEDR_REDDIT_BLUESKY_IDENTIFIER",
-          "appPasswordEnv": "FEEDR_REDDIT_BLUESKY_APP_PASSWORD"
-        },
-        {
-          "id": "brinet-congress",
-          "identifierEnv": "FEEDR_CONGRESS_BLUESKY_IDENTIFIER",
-          "appPasswordEnv": "FEEDR_CONGRESS_BLUESKY_APP_PASSWORD"
+          "id": "main",
+          "identifierEnv": "FEEDR_BLUESKY_IDENTIFIER",
+          "appPasswordEnv": "FEEDR_BLUESKY_APP_PASSWORD"
         }
       ]
     }
   ],
   "feeds": [
     {
-      "id": "reddit",
+      "id": "example",
       "destinations": [
-        { "publisher": "bluesky", "account": "brinet-reddit" }
-      ]
-    },
-    {
-      "id": "congress",
-      "destinations": [
-        { "publisher": "bluesky", "account": "brinet-congress" }
+        { "publisher": "bluesky", "account": "main" }
       ]
     }
   ]
 }
 ```
 
-For that configuration, the two nodes write to
-`YYYY_MM_DD/nodes/reddit/posts.json` and
-`YYYY_MM_DD/nodes/congress/posts.json`, respectively. The parent sends each
-file only to its configured account. A feed can list multiple destinations when
-intentional cross-posting is needed.
-
-The quick-start's one-account configuration uses `defaultFeed` to route the
-legacy top-level `YYYY_MM_DD/posts.json`. `defaultFeed` is optional; omit it
-when every producer is a named node.
+For that configuration, feedr sends `YYYY_MM_DD/posts.json` to the configured
+account. A feed can list multiple destinations when intentional cross-posting
+is needed. `defaultFeed` is required and selects the route for that file.
 
 Account values can be supplied directly as `identifier` and `appPassword`, but
 environment variables are recommended. Compose reads arbitrary account
@@ -126,10 +106,8 @@ variables from `~/.feedr/credentials.env`; for the configuration above it
 contains:
 
 ```sh
-FEEDR_REDDIT_BLUESKY_IDENTIFIER=reddit.example
-FEEDR_REDDIT_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
-FEEDR_CONGRESS_BLUESKY_IDENTIFIER=congress.example
-FEEDR_CONGRESS_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+FEEDR_BLUESKY_IDENTIFIER=example.bsky.social
+FEEDR_BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 ```
 
 The quick-start creates a 0600 credentials file for its single sample account
@@ -177,7 +155,7 @@ partial document:
 set -eu
 
 day="$(date +%Y_%m_%d)"
-target="$HOME/.feedr/$day/nodes/reddit"
+target="$HOME/.feedr/$day"
 mkdir -p "$target"
 your-generator-command >"$target/posts.json.tmp"
 mv "$target/posts.json.tmp" "$target/posts.json"
@@ -206,10 +184,3 @@ docker run --rm \
   -v "$HOME/.feedr:/feedr" \
   feedr:local
 ```
-
-## Child nodes
-
-Named child-node directories and parent-side routing are implemented. A future
-`feedr-node` runner can add portable command scheduling and JSON validation;
-the execution model and boundary rationale are in
-[docs/child-nodes.md](docs/child-nodes.md).

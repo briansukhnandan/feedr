@@ -56,12 +56,8 @@ func (d *Daemon) processCurrentDay(ctx context.Context, config Config) {
 	}
 	defer deliveries.close()
 	publishers := d.newPublishers(config)
-
-	if config.DefaultFeed != "" {
-		feed, _ := config.feed(config.DefaultFeed)
-		d.processFeedFile(ctx, date, feed, filepath.Join(d.dir, date, "posts.json"), publishers, deliveries)
-	}
-	d.processNodeFiles(ctx, date, config, publishers, deliveries)
+	feed, _ := config.feed(config.DefaultFeed)
+	d.processFeedFile(ctx, date, feed, filepath.Join(d.dir, date, "posts.json"), publishers, deliveries)
 }
 
 func (d *Daemon) newPublishers(config Config) map[string]Publisher {
@@ -77,29 +73,6 @@ func (d *Daemon) newPublishers(config Config) map[string]Publisher {
 		}
 	}
 	return publishers
-}
-
-func (d *Daemon) processNodeFiles(ctx context.Context, date string, config Config, publishers map[string]Publisher, deliveries *deliveryStore) {
-	nodesDir := filepath.Join(d.dir, date, "nodes")
-	entries, err := os.ReadDir(nodesDir)
-	if errors.Is(err, os.ErrNotExist) {
-		return
-	}
-	if err != nil {
-		d.logger.Error("could not read node directory", "date", date, "error", err)
-		return
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		feed, configured := config.feed(entry.Name())
-		if !configured {
-			d.logger.Warn("ignoring node with no configured feed", "node", entry.Name())
-			continue
-		}
-		d.processFeedFile(ctx, date, feed, filepath.Join(nodesDir, entry.Name(), "posts.json"), publishers, deliveries)
-	}
 }
 
 func (d *Daemon) processFeedFile(ctx context.Context, date string, feed FeedConfig, path string, publishers map[string]Publisher, deliveries *deliveryStore) {

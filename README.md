@@ -45,8 +45,8 @@ credentials are not saved in `config.json`.
 │       ├── reddit/posts.json
 │       └── congress/posts.json
 ├── credentials.env             # account credentials; mode 0600
-└── .state/
-    └── deliveries.json       # maintained by feedr
+└── state/
+    └── deliveries.db         # maintained by feedr
 ```
 
 On startup and every `pollIntervalSeconds` (60 seconds by default), feedr
@@ -56,14 +56,14 @@ top-level `YYYY_MM_DD/posts.json`. The date uses the configured IANA timezone
 posts on every pass, so generators can update them without restarting the
 daemon.
 
-The delivery journal is keyed by date, feed ID, stable post ID, and destination
+The delivery database is keyed by date, feed ID, stable post ID, and destination
 account. Once a delivery is recorded it is not sent again by ordinary polling
 passes. Preserve stable IDs when regenerating a file. This is **at-least-once**
 delivery: an abrupt process or filesystem failure after the remote API accepts
-a post but before the journal is saved can cause a duplicate after the daemon
+a post but before the database write can cause a duplicate after the daemon
 restarts.
 
-Do not edit `.state/deliveries.json` except to intentionally force a retry.
+Do not edit `state/deliveries.db` except to intentionally force a retry.
 
 ## Configuration
 

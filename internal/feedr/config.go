@@ -11,7 +11,7 @@ import (
 
 const (
 	configFileName = "config.json"
-	stateDirName   = ".state"
+	stateDirName   = "state"
 )
 
 type Config struct {

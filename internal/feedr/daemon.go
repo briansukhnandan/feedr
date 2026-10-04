@@ -49,18 +49,19 @@ func (d *Daemon) Run(ctx context.Context) error {
 
 func (d *Daemon) processCurrentDay(ctx context.Context, config Config) {
 	date := d.now().In(config.location()).Format("2006_01_02")
-	journal, err := loadJournal(d.dir)
+	deliveries, err := openDeliveryStore(d.dir)
 	if err != nil {
-		d.logger.Error("could not load delivery journal", "error", err)
+		d.logger.Error("could not open delivery database", "error", err)
 		return
 	}
+	defer deliveries.close()
 	publishers := d.newPublishers(config)
 
 	if config.DefaultFeed != "" {
 		feed, _ := config.feed(config.DefaultFeed)
-		d.processFeedFile(ctx, date, feed, filepath.Join(d.dir, date, "posts.json"), publishers, &journal)
+		d.processFeedFile(ctx, date, feed, filepath.Join(d.dir, date, "posts.json"), publishers, deliveries)
 	}
-	d.processNodeFiles(ctx, date, config, publishers, &journal)
+	d.processNodeFiles(ctx, date, config, publishers, deliveries)
 }
 
 func (d *Daemon) newPublishers(config Config) map[string]Publisher {
@@ -78,7 +79,7 @@ func (d *Daemon) newPublishers(config Config) map[string]Publisher {
 	return publishers
 }
 
-func (d *Daemon) processNodeFiles(ctx context.Context, date string, config Config, publishers map[string]Publisher, journal *deliveryJournal) {
+func (d *Daemon) processNodeFiles(ctx context.Context, date string, config Config, publishers map[string]Publisher, deliveries *deliveryStore) {
 	nodesDir := filepath.Join(d.dir, date, "nodes")
 	entries, err := os.ReadDir(nodesDir)
 	if errors.Is(err, os.ErrNotExist) {
@@ -97,11 +98,11 @@ func (d *Daemon) processNodeFiles(ctx context.Context, date string, config Confi
 			d.logger.Warn("ignoring node with no configured feed", "node", entry.Name())
 			continue
 		}
-		d.processFeedFile(ctx, date, feed, filepath.Join(nodesDir, entry.Name(), "posts.json"), publishers, journal)
+		d.processFeedFile(ctx, date, feed, filepath.Join(nodesDir, entry.Name(), "posts.json"), publishers, deliveries)
 	}
 }
 
-func (d *Daemon) processFeedFile(ctx context.Context, date string, feed FeedConfig, path string, publishers map[string]Publisher, journal *deliveryJournal) {
+func (d *Daemon) processFeedFile(ctx context.Context, date string, feed FeedConfig, path string, publishers map[string]Publisher, deliveries *deliveryStore) {
 	posts, found, err := d.readPosts(path)
 	if err != nil {
 		d.logger.Error("could not read posts", "feed", feed.ID, "path", path, "error", err)
@@ -118,7 +119,12 @@ func (d *Daemon) processFeedFile(ctx context.Context, date string, feed FeedConf
 				continue
 			}
 			key := date + "|" + feed.ID + "|" + post.ID + "|" + publisher.ID()
-			if _, delivered := journal.Deliveries[key]; delivered {
+			delivered, err := deliveries.delivered(key)
+			if err != nil {
+				d.logger.Error("could not check delivery database", "post", post.ID, "publisher", publisher.ID(), "error", err)
+				continue
+			}
+			if delivered {
 				continue
 			}
 			receipt, err := publisher.Publish(ctx, post)
@@ -126,9 +132,8 @@ func (d *Daemon) processFeedFile(ctx context.Context, date string, feed FeedConf
 				d.logger.Error("publication failed", "post", post.ID, "publisher", publisher.ID(), "error", err)
 				continue
 			}
-			journal.Deliveries[key] = receipt
-			if err := journal.save(d.dir); err != nil {
-				d.logger.Error("published but could not save delivery journal; retry may duplicate the post", "post", post.ID, "publisher", publisher.ID(), "error", err)
+			if err := deliveries.record(key, receipt); err != nil {
+				d.logger.Error("published but could not record delivery; retry may duplicate the post", "post", post.ID, "publisher", publisher.ID(), "error", err)
 				continue
 			}
 			d.logger.Info("published post", "feed", feed.ID, "post", post.ID, "publisher", publisher.ID(), "receipt", receipt.ID)

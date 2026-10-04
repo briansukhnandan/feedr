@@ -1,7 +1,9 @@
 FROM golang:1.24-alpine AS build
 
+ENV PATH=/usr/local/go/bin:$PATH
+
 WORKDIR /src
-COPY go.mod ./
+COPY go.mod go.sum ./
 COPY cmd ./cmd
 COPY internal ./internal
 RUN go test ./... && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/feedr ./cmd/feedr

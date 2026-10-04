@@ -1,6 +1,10 @@
 .PHONY: start stop test shell export
 
 start:
+	@if docker compose ps --status running --services | grep -qx feedr; then \
+		echo "feedr is already running; aborting."; \
+		exit 1; \
+	fi
 	./scripts/quickstart.sh
 	@echo "Started feedr!"
 

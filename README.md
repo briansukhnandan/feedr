@@ -17,6 +17,12 @@ Initialize the local feedr directory and deploy the daemon:
 make start
 ```
 
+To stop and remove the running container while preserving your feed data:
+
+```sh
+make stop
+```
+
 To open a shell in the running container:
 
 ```sh

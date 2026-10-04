@@ -1,8 +1,11 @@
-.PHONY: start test shell export
+.PHONY: start stop test shell export
 
 start:
 	./scripts/quickstart.sh
 	@echo "Started feedr!"
+
+stop:
+	docker compose rm --stop --force feedr
 
 test:
 	docker build --target test .

@@ -23,6 +23,12 @@ To open a shell in the running container:
 make shell
 ```
 
+To export the daemon logs to a timestamped file in `/tmp`:
+
+```sh
+make export
+```
+
 On its first run, the script creates `~/.feedr/`, `config.json`, today's
 example `posts.json`, and an empty, mode-0600 `~/.feedr/.env`. It never
 replaces existing configuration or generated content. Add your account values
